@@ -1,24 +1,61 @@
-import logo from './logo.svg';
 import './App.css';
+import { BrowserRouter, Switch, Route, Redirect } from 'react-router-dom'
+import Registration from './Registration.js';
+import Login from './Login.js';
+import Welcome from './Welcome';
+import auth from './firebase';
+import { useState, useEffect } from 'react';
+import {useDispatch, useSelector} from 'react-redux';
+import {login, logout, selectUser} from './redux/userSlice'
+// import {Redirect} from 'react-router-dom'
 
 function App() {
+  const dispatch = useDispatch()
+  const user = useSelector(selectUser)
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((authUser) => {
+      if (authUser) {
+        dispatch(
+          login({
+            uid: authUser.uid,
+            photo: authUser.photoURL,
+            email: authUser.email,
+            displayName: authUser.displayName,
+          })
+        );
+      } else {
+        dispatch(logout());
+      }
+    });
+    return unsubscribe;
+  }, [dispatch]);
+  console.log("redux",user);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      <Switch>
+        {
+         ! user ? (  <>
+          <Route exact path="/register">
+          <Registration />
+        </Route>
+        <Route exact path="/login">
+          <Login />
+        </Route>
+        <Redirect to ="/register" />
+          </> ): (
+            <>
+         <Route exact path="/">
+         <Welcome />
+       </Route>
+       <Redirect to ="/" />
+       </>
+        )
+        }
+        
+        
+      </Switch>
+    </BrowserRouter>
   );
 }
 
